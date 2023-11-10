@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>360-view</title>
+  </head>
+  <style>
+    .container {
+      position: relative;
+      width: 900px;
+      margin: 0 auto;
+    }
+    #main {
+      position: relative;
+      width: 100%;
+      height: 500px;
+      border: 1px solid black;
+      cursor: grabbing;
+    }
+    #main img {
+      width: 100%;
+      height: 100%;
+    }
+
+    .img-magnifier-glass {
+      position: absolute;
+      border: 3px solid #000;
+      border-radius: 50%;
+      cursor: none;
+      width: 100px;
+      height: 100px;
+      pointer-events: none;
+      opacity: 0;
+    }
+
+    .show {
+      opacity: 1;
+    }
+  </style>
+  <body>
+    <div class="container">
+      <div id="main">
+        <div class="img-magnifier-glass"></div>
+        <img id="img-orginal" draggable="false" src="img-1.jpg" />
+      </div>
+    </div>
+
+    <script>
+      // get the container element
+      const mainImg = document.getElementById("img-orginal"),
+        mainContainer = document.getElementById("main"),
+        glass = document.querySelector(".img-magnifier-glass");
+      // create array of images
+      const images = Array.from(
+        { length: 6 },
+        (_, index) => `img-${index + 1}.jpg`
+      );
+      // Deafult zoom level and border width
+      const ZOOM = 3,
+        BW = 3;
+
+      let isDown = false,
+        W = 0,
+        H = 0,
+        currentImg = images[0];
+
+      // set magnifier glass background properties
+      setBackgroundPropsToMagnifier();
+
+      // set width and height of the magnifier glass
+      W = glass.offsetWidth / 2;
+      H = glass.offsetHeight / 2;
+
+      // convert value from one range to another
+
+      function convertToRange(value, srcRange, dstRange) {
+        // value is outside source range return
+        if (value < srcRange[0] || value > srcRange[1]) {
+          return NaN;
+        }
+
+        const srcMax = srcRange[1] - srcRange[0],
+          dstMax = dstRange[1] - dstRange[0],
+          adjValue = value - srcRange[0];
+
+        return (adjValue * dstMax) / srcMax + dstRange[0];
+      }
+
+      // add mouseleve EventListener to the main container
+      mainContainer.addEventListener("mouseleave", function () {
+        const glass = document.querySelector(".img-magnifier-glass");
+        if (glass) {
+          glass.classList.remove("show");
+        }
+
+        isDown = false;
+      });
+      // add mouseenter EventListener to the main container
+      mainContainer.addEventListener("mouseenter", function () {
+        if (glass) {
+          glass.classList.add("show");
+        }
+      });
+
+      // add mousemove EventListener to the main container
+
+      mainContainer.addEventListener("mousemove", function (e) {
+        // get the mouse cursor position relative to the container div
+
+        const rect = mainContainer.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        if (isDown) {
+          const validX = x >= 0 && x <= rect.width ? x : 0;
+          // caculate the index of the image to be displayed based on the mouse cursor
+          //  position relative to the container div width and the number of images
+          //  in the array of images and round the result to the nearest integer value using
+          // Math.round() method and store the result in a variable called index .
+          const index = Math.round(
+            convertToRange(validX, [0, rect.width], [0, images.length - 1])
+          );
+
+          currentImg = images[index];
+
+          mainImg.src = currentImg;
+          // set magnifiyer glass background properties with the current image
+          setBackgroundPropsToMagnifier();
+
+          return;
+        }
+
+        // check the mouse cursor position relative to the container div width and height
+        // and set the position of the magnifier glass accordingly
+        let glassX = x,
+          glassY = y;
+
+        if (glassX - W < 0) {
+          glassX = W;
+        }
+
+        if (glassX + W > rect.width) {
+          glassX = rect.width - W;
+        }
+
+        if (glassY - H < 0) {
+          glassY = H;
+        }
+
+        if (glassY + H > rect.height) {
+          glassY = rect.height - H;
+        }
+
+        /*set the position of the magnifier glass:*/
+        glass.style.left = glassX - W + "px";
+        glass.style.top = glassY - H + "px";
+
+        /*set the position of what magnifier glass sees:*/
+        glass.style.backgroundPositionX = "-" + (glassX * ZOOM - W + BW) + "px";
+        glass.style.backgroundPositionY = "-" + (glassY * ZOOM - H + BW) + "px";
+      });
+      // condition for mouse down and mouse up event listener
+      //  on the main container div element to show and hide the magnifier glass
+      mainContainer.addEventListener("mousedown", function (e) {
+        isDown = true;
+        glass.classList.remove("show");
+      });
+
+      mainContainer.addEventListener("mouseup", function (e) {
+        isDown = false;
+        glass.classList.add("show");
+      });
+
+      // function for set background properties for the magnifier glass
+      function setBackgroundPropsToMagnifier() {
+        /*set background properties for the magnifier glass:*/
+        glass.style.backgroundImage = `url(${currentImg})`;
+        glass.style.backgroundRepeat = "no-repeat";
+        glass.style.zIndex = 100;
+        glass.style.backgroundSize =
+          mainImg.width * ZOOM + "px " + mainImg.height * ZOOM + "px";
+      }
+    </script>
+  </body>
+</html>
