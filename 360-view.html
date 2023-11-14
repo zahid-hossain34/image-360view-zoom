@@ -8,19 +8,21 @@
   <style>
     .container {
       position: relative;
-      width: 900px;
+      width: 90%; /* Use a percentage for responsiveness */
+      max-width: 900px; /* Set a maximum width */
       margin: 0 auto;
     }
     #main {
       position: relative;
       width: 100%;
-      height: 500px;
+      height: auto; /* Allow the height to adjust based on the image aspect ratio */
       border: 1px solid black;
-      cursor: grabbing;
+      cursor: ew-resize;
     }
     #main img {
       width: 100%;
       height: 100%;
+      display: block; /* Remove any extra spacing issues */
     }
 
     .img-magnifier-glass {
@@ -28,14 +30,36 @@
       border: 3px solid #000;
       border-radius: 50%;
       cursor: none;
-      width: 100px;
-      height: 100px;
+      width: 150px; /* Use vw units for a percentage of the viewport width */
+      height: 150px;
       pointer-events: none;
       opacity: 0;
     }
 
     .show {
       opacity: 1;
+    }
+
+    /* Media Query for tablets */
+    @media (max-width: 768px) {
+      .container {
+        width: 90%;
+      }
+      .img-magnifier-glass {
+        width: 100px;
+        height: 100px;
+      }
+    }
+
+    /* Media Query for phones */
+    @media (max-width: 480px) {
+      .container {
+        width: 100%;
+      }
+      .img-magnifier-glass {
+        width: 70px;
+        height: 70px;
+      }
     }
   </style>
   <body>
@@ -47,6 +71,17 @@
     </div>
 
     <script>
+      function setMagnifierProperties() {
+        // set width and height of the magnifier glass
+        W = glass.offsetWidth / 2;
+        H = glass.offsetHeight / 2;
+      }
+      // add resize event listener to handle window width changes
+      window.addEventListener("resize", function () {
+        setMagnifierProperties();
+        setBackgroundPropsToMagnifier();
+      });
+
       // get the container element
       const mainImg = document.getElementById("img-orginal"),
         mainContainer = document.getElementById("main"),
@@ -57,7 +92,7 @@
         (_, index) => `img-${index + 1}.jpg`
       );
       // Deafult zoom level and border width
-      const ZOOM = 3,
+      const ZOOM = 2,
         BW = 3;
 
       let isDown = false,
@@ -127,6 +162,8 @@
           mainImg.src = currentImg;
           // set magnifiyer glass background properties with the current image
           setBackgroundPropsToMagnifier();
+          // update magnifier glass properties when the window is resized
+          setMagnifierProperties();
 
           return;
         }
